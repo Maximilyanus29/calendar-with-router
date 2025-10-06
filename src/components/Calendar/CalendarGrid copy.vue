@@ -1,18 +1,159 @@
 <script setup>
-import { useGenerateCalendar } from '@/composables/Calendar/calendar.js'
-import { useGetAttaks } from '@/composables/Calendar/attacks.js'
-const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
-const calendarDays = useGenerateCalendar(new Date())
-const attacks = useGetAttaks()
+import { ref, computed, watch } from 'vue'
 
-calendarDays.forEach((element) => {
-  if (attacks[element.date]) {
-    console.log(element.date)
-    element.attaks = attacks[element.date]
-  }
+// Конфигурация
+const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+const MONTHS = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
+
+// Props это то что переданно в этот компонент
+const props = defineProps({
+  modelValue: Date,
+  showNavigation: {
+    type: Boolean,
+    default: true,
+  },
+  highlightToday: {
+    type: Boolean,
+    default: true,
+  },
+  showOtherMonths: {
+    type: Boolean,
+    default: true,
+  },
 })
 
-console.log(calendarDays)
+// Реактивное состояние
+const currentDate = ref(props.modelValue || new Date())
+
+// Вычисляемые свойства
+// const calendarTitle = computed(() => {
+//   return `${MONTHS[currentDate.value.getMonth()]} ${currentDate.value.getFullYear()}`
+// })
+
+const attacks = ref({
+  '2025-09-28': [
+    {
+      start: '2025-09-28 15:30',
+      end: '2025-09-30 17:30',
+    },
+    {
+      start: '2025-09-15 15:30',
+      end: '2025-09-22 17:30',
+    },
+  ],
+  '2025-09-15': [
+    {
+      start: '2025-09-28 15:30',
+      end: '2025-09-30 17:30',
+    },
+    {
+      start: '2025-09-15 15:30',
+      end: '2025-09-22 17:30',
+    },
+  ],
+})
+
+const calendarDays = computed(() => {
+  const year = currentDate.value.getFullYear()
+  const month = currentDate.value.getMonth()
+
+  // Первый день месяца и последний день месяца
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+
+  // Первый день календаря (понедельник недели, содержащей 1 число)
+  const firstCalendarDay = new Date(firstDay)
+  const dayOfWeek = firstDay.getDay() || 7 // Convert Sunday (0) to 7
+  firstCalendarDay.setDate(firstCalendarDay.getDate() - (dayOfWeek - 1))
+
+  // Последний день календаря
+  const lastCalendarDay = new Date(lastDay)
+  const lastDayOfWeek = lastDay.getDay() || 7
+  lastCalendarDay.setDate(lastCalendarDay.getDate() + 7 + (7 - lastDayOfWeek))
+
+  const days = []
+  const currentDay = new Date(firstCalendarDay)
+
+  while (currentDay <= lastCalendarDay) {
+    const day = new Date(currentDay)
+
+    const dateStr = day.toISOString()
+    console.log(dateStr)
+    console.log(attacks[dateStr])
+
+    days.push({
+      date: new Date(day),
+      day: day.getDate(),
+      month: day.getMonth(),
+      monthName: MONTHS[day.getMonth()],
+      year: day.getFullYear(),
+      isCurrentMonth: day.getMonth() === month,
+      isToday: isToday(day),
+      isWeekend: isWeekend(day),
+      isFirstDay: isFirstDay(day),
+      attacks: attacks[dateStr],
+    })
+
+    currentDay.setDate(currentDay.getDate() + 1)
+  }
+
+  return days
+})
+
+// Функции
+function isToday(date) {
+  const today = new Date()
+  return (
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear()
+  )
+}
+
+function isFirstDay(date) {
+  return date.getDate() === 1
+}
+
+function isWeekend(date) {
+  const day = date.getDay()
+  return day === 0 || day === 6
+}
+
+// function selectDate(date) {
+//   selectedDate.value = date
+//   emit('update:modelValue', date)
+//   emit('dateSelect', date)
+// }
+
+// function navigateMonth(direction) {
+//   const newDate = new Date(currentDate.value)
+//   newDate.setMonth(newDate.getMonth() + direction)
+//   currentDate.value = newDate
+// }
+
+// function goToToday() {
+//   const today = new Date()
+//   currentDate.value = today
+//   selectDate(today)
+// }
+
+// Watchers
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      selectedDate.value = newValue
+      currentDate.value = newValue
+    }
+  },
+)
+
+const attackClassList = ref({
+  // 'attack-start': true,
+  // 'attack-end': true,
+})
+
+// console.log(calendarDays.value)
 </script>
 
 <template>
@@ -71,13 +212,13 @@ console.log(calendarDays)
           today: day.isToday && highlightToday,
           weekend: day.isWeekend,
         }"
-        @click="false"
+        @click="selectDate(day.date)"
         :aria-current="day.isToday ? 'date' : null"
       >
         <span class="day-number">{{ day.day }}</span>
-        <!-- <span class="month-name" v-if="isFirstDay(day.date)">{{ day.monthName }}</span> -->
+        <span class="month-name" v-if="isFirstDay(day.date)">{{ day.monthName }}</span>
 
-        <!-- <div class="attack" :class="attackClassList">attack</div> -->
+        <div class="attack" :class="attackClassList">attack</div>
 
         <!-- Индикатор событий (можно заменить реальными данными) -->
         <!-- <div v-if="day.isCurrentMonth" class="day-events">
@@ -93,11 +234,6 @@ console.log(calendarDays)
 </template>
 
 <style scoped>
-/* .calendar {
-  position: relative;
-  min-height: 100%;
-  min-width: 100%;
-} */
 .weekdays {
   position: absolute;
   top: 0;
