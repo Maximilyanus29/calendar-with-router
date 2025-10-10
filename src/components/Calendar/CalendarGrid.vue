@@ -1,15 +1,13 @@
 <script setup>
 import { useGenerateCalendar } from '@/composables/Calendar/calendar.js'
 import { useGetAttaks } from '@/composables/Calendar/attacks.js'
-const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+
+// const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 const calendarDays = useGenerateCalendar(new Date())
 const attacks = useGetAttaks()
 
 calendarDays.forEach((element) => {
-  if (attacks[element.date]) {
-    console.log(element.date)
-    element.attaks = attacks[element.date]
-  }
+  element.attaсks = attacks
 })
 
 console.log(calendarDays)
@@ -48,7 +46,7 @@ console.log(calendarDays)
     </div> -->
 
     <!-- Дни недели -->
-    <div class="weekdays">
+    <!-- <div class="weekdays">
       <div
         v-for="weekday in WEEKDAYS"
         :key="weekday"
@@ -57,7 +55,7 @@ console.log(calendarDays)
       >
         {{ weekday }}
       </div>
-    </div>
+    </div> -->
 
     <!-- Дни календаря -->
     <div class="calendar-grid">
@@ -66,8 +64,8 @@ console.log(calendarDays)
         :key="index"
         class="calendar-day"
         :class="{
-          'current-month': day.isCurrentMonth,
-          'other-month': !day.isCurrentMonth && showOtherMonths,
+          'other-month': !day.isCurrentMonth,
+          // 'other-month': !day.isCurrentMonth && showOtherMonths,
           today: day.isToday && highlightToday,
           weekend: day.isWeekend,
         }"
@@ -76,6 +74,8 @@ console.log(calendarDays)
       >
         <span class="day-number">{{ day.day }}</span>
         <!-- <span class="month-name" v-if="isFirstDay(day.date)">{{ day.monthName }}</span> -->
+
+        <div v-for="(attack, index) in day.attacks" :key="index">{{ attack.start }}</div>
 
         <!-- <div class="attack" :class="attackClassList">attack</div> -->
 
@@ -93,11 +93,6 @@ console.log(calendarDays)
 </template>
 
 <style scoped>
-/* .calendar {
-  position: relative;
-  min-height: 100%;
-  min-width: 100%;
-} */
 .weekdays {
   position: absolute;
   top: 0;
@@ -112,7 +107,6 @@ console.log(calendarDays)
   font-size: 12px;
   padding: 0 2px;
 }
-
 .calendar-grid {
   position: absolute;
   top: 0;
@@ -134,8 +128,8 @@ console.log(calendarDays)
 .calendar-grid .calendar-day.today {
   color: blue;
 }
-.calendar-grid .calendar-day.current-month {
-  background-color: white;
+.calendar-grid .calendar-day.other-month {
+  background-color: rgb(225, 225, 225);
 }
 
 .calendar-grid .calendar-day .attack {

@@ -1,9 +1,9 @@
-<script setup lang="ts">
-import Calendar from '@/components/Calendar/Calendar.vue'
+<script setup>
+import CalendarGrid from '@/components/Calendar/CalendarGrid.vue'
 </script>
 
 <template>
   <main>
-    <Calendar />
+    <CalendarGrid />
   </main>
 </template>
